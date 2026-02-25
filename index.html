@@ -683,6 +683,49 @@
             .btn { padding: 8px 15px; font-size: 11px; }
         }
 
+        @media (min-width: 1024px) {
+            body {
+                padding: 24px;
+            }
+
+            .game-container {
+                padding: 28px;
+            }
+
+            .header {
+                gap: 16px;
+                padding: 18px 28px;
+            }
+
+            .controls {
+                gap: 14px;
+            }
+
+            .btn {
+                padding: 11px 24px;
+                font-size: 14px;
+            }
+
+            .screen-content {
+                max-width: 980px;
+                width: 92%;
+            }
+
+            .shop-grid {
+                grid-template-columns: repeat(4, 1fr);
+                max-height: 420px;
+            }
+
+            .achievements-grid {
+                grid-template-columns: repeat(3, 1fr);
+                max-height: 460px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
         .powerup-indicator {
             position: absolute;
             top: 70px;
@@ -771,6 +814,39 @@
             font-family: monospace;
             margin: 0 2px;
             font-size: 12px;
+        }
+
+        .shortcut-hint {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            margin-left: 10px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.26), rgba(255,255,255,0.12));
+            border: 1px solid rgba(255, 255, 255, 0.34);
+            color: #fff;
+            font-family: monospace;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.1;
+            vertical-align: middle;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 8px rgba(0,0,0,0.2);
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .has-shortcut {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .has-shortcut .btn-label {
+            min-width: 0;
+            text-align: left;
         }
 
         .combo-display {
@@ -1238,6 +1314,37 @@
 
             // ==================== DOM ====================
             var $ = function(id) { return document.getElementById(id); };
+            var BUTTON_SHORTCUTS = [
+                { id: 'pauseBtn', key: ' ', label: 'Space', screen: 'game', showHint: true },
+                { id: 'menuBtn', key: 'm', label: 'M', screen: 'game', showHint: true },
+                { id: 'shopBtn', key: 'b', label: 'B', screen: 'game', showHint: true },
+                { id: 'achieveBtn', key: 'k', label: 'K', screen: 'game', showHint: true },
+
+                { id: 'startGameBtn', key: 'enter', label: 'Enter', screen: 'menuScreen', showHint: true },
+                { id: 'selectLevelBtn', key: 'l', label: 'L', screen: 'menuScreen', showHint: true },
+                { id: 'openShopBtn', key: 's', label: 'S', screen: 'menuScreen', showHint: true },
+                { id: 'achievementsBtn', key: 'a', label: 'A', screen: 'menuScreen', showHint: true },
+                { id: 'statsBtn', key: 't', label: 'T', screen: 'menuScreen', showHint: true },
+                { id: 'helpBtn', key: 'h', label: 'H', screen: 'menuScreen', showHint: true },
+
+                { id: 'levelBackBtn', key: 'escape', label: 'Esc', screen: 'levelScreen', showHint: true },
+                { id: 'shopBackBtn', key: 'escape', label: 'Esc', screen: 'shopScreen', showHint: true },
+                { id: 'achieveBackBtn', key: 'escape', label: 'Esc', screen: 'achievementsScreen', showHint: true },
+                { id: 'statsBackBtn', key: 'escape', label: 'Esc', screen: 'statsScreen', showHint: true },
+                { id: 'helpBackBtn', key: 'escape', label: 'Esc', screen: 'helpScreen', showHint: true },
+
+                { id: 'tryAgainBtn', key: 'r', label: 'R', screen: 'gameOverScreen', showHint: true },
+                { id: 'gameOverMenuBtn', key: 'm', label: 'M', screen: 'gameOverScreen', showHint: true },
+
+                { id: 'nextLevelBtn', key: 'n', label: 'N', screen: 'levelCompleteScreen', showHint: true },
+                { id: 'levelCompleteMenuBtn', key: 'm', label: 'M', screen: 'levelCompleteScreen', showHint: true },
+
+                { id: 'continueBtn', key: 'enter', label: 'Enter', screen: 'bossDefeatedScreen', showHint: true },
+
+                { id: 'resumeBtn', key: 'enter', label: 'Enter', screen: 'pauseScreen', showHint: true },
+                { id: 'restartBtn', key: 'r', label: 'R', screen: 'pauseScreen', showHint: true },
+                { id: 'pauseMenuBtn', key: 'm', label: 'M', screen: 'pauseScreen', showHint: true }
+            ];
 
             // ==================== HELPERS ====================
             function showScreen(id) {
@@ -1247,6 +1354,70 @@
                     if (el) el.classList.remove('active');
                 }
                 if (id) $(id).classList.add('active');
+            }
+
+            function getActiveScreenId() {
+                var active = document.querySelector('.screen-overlay.active');
+                return active ? active.id : null;
+            }
+
+            function isShortcutActive(def) {
+                var activeScreen = getActiveScreenId();
+                if (def.screen === 'game') return game.isPlaying && !activeScreen;
+                return activeScreen === def.screen;
+            }
+
+            function normalizeShortcutKey(key) {
+                if (key === ' ') return ' ';
+                return String(key || '').toLowerCase();
+            }
+
+            function handleShortcut(e) {
+                if (e.metaKey || e.ctrlKey || e.altKey) return false;
+
+                var key = normalizeShortcutKey(e.key);
+                for (var i = 0; i < BUTTON_SHORTCUTS.length; i++) {
+                    var def = BUTTON_SHORTCUTS[i];
+                    if (key === def.key && isShortcutActive(def)) {
+                        var btn = $(def.id);
+                        if (!btn) return false;
+                        e.preventDefault();
+                        btn.click();
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            function applyShortcutHints() {
+                for (var i = 0; i < BUTTON_SHORTCUTS.length; i++) {
+                    var def = BUTTON_SHORTCUTS[i];
+                    if (!def.showHint) continue;
+
+                    var btn = $(def.id);
+                    if (!btn || btn.querySelector('.shortcut-hint')) continue;
+
+                    btn.classList.add('has-shortcut');
+
+                    var label = btn.querySelector('.btn-label');
+                    if (!label) {
+                        label = document.createElement('span');
+                        label.className = 'btn-label';
+                        while (btn.firstChild) {
+                            label.appendChild(btn.firstChild);
+                        }
+                        btn.appendChild(label);
+                    }
+
+                    var hint = document.createElement('span');
+                    hint.className = 'shortcut-hint';
+                    hint.textContent = def.label;
+                    btn.appendChild(hint);
+
+                    var existingTitle = btn.getAttribute('title');
+                    var shortcutTitle = 'Shortcut: ' + def.label;
+                    btn.setAttribute('title', existingTitle ? (existingTitle + ' | ' + shortcutTitle) : shortcutTitle);
+                }
             }
 
             function showNotification(msg, type) {
@@ -2417,12 +2588,13 @@
 
             // ==================== EVENTS ====================
             document.addEventListener('keydown', function(e) {
+                if (handleShortcut(e)) return;
                 if (!game.isPlaying) return;
-                var k = e.key;
-                if (k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); if (game.direction.y !== 1) game.nextDirection = { x: 0, y: -1 }; }
-                if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); if (game.direction.y !== -1) game.nextDirection = { x: 0, y: 1 }; }
-                if (k === 'ArrowLeft' || k === 'a' || k === 'A') { e.preventDefault(); if (game.direction.x !== 1) game.nextDirection = { x: -1, y: 0 }; }
-                if (k === 'ArrowRight' || k === 'd' || k === 'D') { e.preventDefault(); if (game.direction.x !== -1) game.nextDirection = { x: 1, y: 0 }; }
+                var k = normalizeShortcutKey(e.key);
+                if (k === 'arrowup' || k === 'w') { e.preventDefault(); if (game.direction.y !== 1) game.nextDirection = { x: 0, y: -1 }; }
+                if (k === 'arrowdown' || k === 's') { e.preventDefault(); if (game.direction.y !== -1) game.nextDirection = { x: 0, y: 1 }; }
+                if (k === 'arrowleft' || k === 'a') { e.preventDefault(); if (game.direction.x !== 1) game.nextDirection = { x: -1, y: 0 }; }
+                if (k === 'arrowright' || k === 'd') { e.preventDefault(); if (game.direction.x !== -1) game.nextDirection = { x: 1, y: 0 }; }
                 if (k === ' ') { e.preventDefault(); game.isPaused ? resumeGame() : pauseGame(); }
             });
 
@@ -2464,6 +2636,7 @@
             generateLevelGrid();
             generateShopGrid();
             generateAchievementsGrid();
+            applyShortcutHints();
 
             ctx.fillStyle = '#0a0a15';
             ctx.fillRect(0, 0, CONFIG.CANVAS_SIZE, CONFIG.CANVAS_SIZE);
