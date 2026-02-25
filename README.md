@@ -1,6 +1,6 @@
 # Ultimate Snake - Legendary Edition
 
-A single-file browser game built with HTML, CSS, and vanilla JavaScript.
+A browser game built with HTML, CSS, and vanilla JavaScript.
 
 ## Overview
 
@@ -13,7 +13,10 @@ Ultimate Snake is an arcade-style Snake game with:
 - Achievement system and player stats
 - Mobile D-pad controls in addition to keyboard controls
 
-Everything lives in one file: `index.html`.
+The project is now split by concern:
+- `index.html` for markup/UI structure
+- `styles/game.css` for styling
+- `js/game.js` for game logic
 
 ## Quick Start
 
@@ -49,7 +52,9 @@ Then open:
 
 ## Project Structure
 
-- `index.html`: UI, game logic, assets, and styles
+- `index.html`: UI markup and screen layout
+- `styles/game.css`: all game styles
+- `js/game.js`: gameplay logic, rendering, and input handling
 
 ## Requirements
 
